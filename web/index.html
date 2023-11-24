@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tugas Akhir Talenthub</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <section class="msger">
+      <main class="msger-chat"></main>
+
+      <form class="msger-inputarea" onsubmit="sendMessage(); return false;">
+        <input type="text" class="msger-input" placeholder="Enter your message..." required />
+        <button type="submit" class="msger-send-btn">Send</button>
+      </form>
+    </section>
+
+    <script type="text/javascript">
+      function init() {
+        if (!window.WebSocket) {
+          alert("Your browser does not support WebSocket");
+          return;
+        }
+
+        var name = prompt("Enter your name please:") || "User";
+        var container = document.querySelector(".msger-chat");
+        var ws = new WebSocket("ws://" + window.location.host + "/ws?username=" + name);
+
+        ws.onopen = function () {
+          var message = '<div class="user-status">You joined</div>';
+          print(message);
+        };
+
+        ws.onmessage = function (event) {
+          var res = JSON.parse(event.data);
+
+          var messsage = "";
+          if (res.Type === "New User") {
+            message = '<div class="user-status">' + res.From + " joined</div>";
+          } else if (res.Type === "Leave") {
+            message = '<div class="user-status txt-red">' + res.From + " left</div>";
+          } else {
+            message = '<div class="msg left-msg"><div class="msg-bubble"><div class="msg-info"><div class="msg-info-name">' + res.From + '</div></div><div class="msg-text">' + res.Message + "</div></div></div>";
+            console.log(message);
+          }
+
+          print(message);
+        };
+
+        ws.onclose = function () {
+          var message = '<div class="user-status txt-red">You left</div>';
+          print(message);
+        };
+
+        print = function (message) {
+          var el = document.createElement("div");
+          el.innerHTML = message;
+          container.append(el);
+          document.querySelector(".msger-chat").scrollTop = document.querySelector(".msger-chat").scrollHeight;
+        };
+
+        sendMessage = function () {
+          var messageRaw = document.querySelector(".msger-input").value;
+          ws.send(
+            JSON.stringify({
+              Message: messageRaw,
+            })
+          );
+
+          var message = '<div class="msg right-msg"><div class="msg-bubble"><div class="msg-text">' + messageRaw + "</div></div></div>";
+          print(message);
+
+          document.querySelector(".msger-input").value = "";
+        };
+      }
+
+      window.onload = init;
+    </script>
+  </body>
+</html>
